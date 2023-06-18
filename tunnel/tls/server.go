@@ -162,10 +162,16 @@ func (s *Server) acceptLoop() {
 				if atomic.LoadInt32(&s.nextHTTP) != 1 {
 					// there is no websocket layer waiting for connections, redirect it
 					log.Error("incoming http request, but no websocket server is listening")
-					s.redir.Redirect(&redirector.Redirection{
-						InboundConn: rewindConn,
-						RedirectTo:  s.fallbackAddress,
-					})
+					if s.fallbackAddress != nil {
+						s.redir.Redirect(&redirector.Redirection{
+							InboundConn: rewindConn,
+							RedirectTo:  s.fallbackAddress,
+						})
+						return
+					}
+					s.connChan <- &transport.Conn{
+						Conn: rewindConn,
+					}
 					return
 				}
 				// this is a http request, pass it to websocket protocol layer
