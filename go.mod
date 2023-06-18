@@ -1,4 +1,4 @@
-module github.com/p4gefau1t/trojan-go
+module github.com/faireal/trojan-go
 
 go 1.17
 

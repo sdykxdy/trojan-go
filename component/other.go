@@ -4,6 +4,6 @@
 package build
 
 import (
-	_ "github.com/p4gefau1t/trojan-go/easy"
-	_ "github.com/p4gefau1t/trojan-go/url"
+	_ "github.com/faireal/trojan-go/easy"
+	_ "github.com/faireal/trojan-go/url"
 )

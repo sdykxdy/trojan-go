@@ -4,12 +4,12 @@ import (
 	"context"
 	"net"
 
-	"github.com/p4gefau1t/trojan-go/api"
-	"github.com/p4gefau1t/trojan-go/common"
-	"github.com/p4gefau1t/trojan-go/config"
-	"github.com/p4gefau1t/trojan-go/log"
-	"github.com/p4gefau1t/trojan-go/statistic"
-	"github.com/p4gefau1t/trojan-go/tunnel/trojan"
+	"github.com/faireal/trojan-go/api"
+	"github.com/faireal/trojan-go/common"
+	"github.com/faireal/trojan-go/config"
+	"github.com/faireal/trojan-go/log"
+	"github.com/faireal/trojan-go/statistic"
+	"github.com/faireal/trojan-go/tunnel/trojan"
 )
 
 type ClientAPI struct {

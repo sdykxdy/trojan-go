@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 
-	"github.com/p4gefau1t/trojan-go/log"
-	"github.com/p4gefau1t/trojan-go/statistic"
+	"github.com/faireal/trojan-go/log"
+	"github.com/faireal/trojan-go/statistic"
 )
 
 type Handler func(ctx context.Context, auth statistic.Authenticator) error
