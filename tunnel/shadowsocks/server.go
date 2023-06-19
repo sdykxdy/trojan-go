@@ -41,7 +41,10 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 			RedirectTo:  s.redirAddr,
 			InboundConn: rewindConn,
 		})
-		return nil, common.NewError("invalid aead payload")
+		return &Conn{
+			aeadConn: rewindConn,
+			Conn:     conn,
+		}, nil
 	}
 	rewindConn.Rewind()
 	rewindConn.StopBuffering()
