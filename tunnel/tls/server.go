@@ -1,30 +1,29 @@
 package tls
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"io"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"os"
-	"strings"
-	"sync"
-	"sync/atomic"
-	"time"
-
 	"github.com/faireal/trojan-go/common"
 	"github.com/faireal/trojan-go/config"
 	"github.com/faireal/trojan-go/log"
 	"github.com/faireal/trojan-go/redirector"
 	"github.com/faireal/trojan-go/tunnel"
+	"github.com/faireal/trojan-go/tunnel/shadowsocks"
 	"github.com/faireal/trojan-go/tunnel/tls/fingerprint"
 	"github.com/faireal/trojan-go/tunnel/transport"
+	"github.com/faireal/trojan-go/tunnel/trojan"
 	"github.com/faireal/trojan-go/tunnel/websocket"
+	"io"
+	"io/ioutil"
+	"net"
+	"os"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 )
 
 // Server is a tls server
@@ -47,7 +46,7 @@ type Server struct {
 	ctx                context.Context
 	cancel             context.CancelFunc
 	underlay           tunnel.Server
-	nextHTTP           int32
+	nextProtocol       int32 // 1 HTTP 2 WS 3 SS 4 TORJAN
 	portOverrider      map[string]int
 }
 
@@ -149,45 +148,39 @@ func (s *Server) acceptLoop() {
 			// we use a real http header parser to mimic a real http server
 			rewindConn := common.NewRewindConn(tlsConn)
 			rewindConn.SetBufferSize(1024)
-			r := bufio.NewReader(rewindConn)
-			httpReq, err := http.ReadRequest(r)
 			rewindConn.Rewind()
 			rewindConn.StopBuffering()
-			if err != nil {
-				// this is not a http request. pass it to trojan protocol layer for further inspection
-				s.connChan <- &transport.Conn{
-					Conn: rewindConn,
-				}
-			} else {
-				if atomic.LoadInt32(&s.nextHTTP) != 1 {
-					// there is no websocket layer waiting for connections, redirect it
-					log.Error("incoming http request, but no websocket server is listening")
-					if s.fallbackAddress != nil {
-						s.redir.Redirect(&redirector.Redirection{
-							InboundConn: rewindConn,
-							RedirectTo:  s.fallbackAddress,
-						})
-						return
-					}
-					s.connChan <- &transport.Conn{
-						Conn: rewindConn,
-					}
-					return
-				}
-				// this is a http request, pass it to websocket protocol layer
-				log.Debug("http req: ", httpReq)
+
+			switch atomic.LoadInt32(&s.nextProtocol) {
+			case 2:
+				log.Info("tls next is ws")
 				s.wsChan <- &transport.Conn{
 					Conn: rewindConn,
 				}
+				return
+			case 3, 4:
+				log.Info("tls next is ss or torjan")
+				s.connChan <- &transport.Conn{
+					Conn: rewindConn,
+				}
+				return
+			default:
+				log.Info("tls next is http")
+				s.redir.Redirect(&redirector.Redirection{
+					InboundConn: rewindConn,
+					RedirectTo:  s.fallbackAddress,
+				})
+				return
 			}
+
 		}(conn)
 	}
 }
 
 func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	if _, ok := overlay.(*websocket.Tunnel); ok {
-		atomic.StoreInt32(&s.nextHTTP, 1)
-		log.Debug("next proto http")
+		atomic.StoreInt32(&s.nextProtocol, 2)
+		log.Debug("next proto websocket")
 		// websocket overlay
 		select {
 		case conn := <-s.wsChan:
@@ -196,7 +189,29 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 			return nil, common.NewError("transport server closed")
 		}
 	}
-	// trojan overlay
+	if _, ok := overlay.(*shadowsocks.Tunnel); ok {
+		atomic.StoreInt32(&s.nextProtocol, 3)
+		log.Info("next proto shadowsocks")
+		select {
+		case conn := <-s.connChan:
+			return conn, nil
+		case <-s.ctx.Done():
+			return nil, common.NewError("transport server closed")
+		}
+	}
+	if _, ok := overlay.(*trojan.Tunnel); ok {
+		atomic.StoreInt32(&s.nextProtocol, 4)
+		log.Info("next proto trojan")
+		select {
+		case conn := <-s.connChan:
+			return conn, nil
+		case <-s.ctx.Done():
+			return nil, common.NewError("transport server closed")
+		}
+	}
+	// http overlay
+	atomic.StoreInt32(&s.nextProtocol, 1)
+	log.Info("next proto http")
 	select {
 	case conn := <-s.connChan:
 		return conn, nil
