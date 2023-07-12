@@ -15,6 +15,7 @@ import (
 	"github.com/faireal/trojan-go/tunnel/tls/fingerprint"
 	"github.com/faireal/trojan-go/tunnel/transport"
 	"github.com/faireal/trojan-go/tunnel/trojan"
+	"github.com/faireal/trojan-go/tunnel/vmess"
 	"github.com/faireal/trojan-go/tunnel/websocket"
 	"io"
 	"io/ioutil"
@@ -158,8 +159,8 @@ func (s *Server) acceptLoop() {
 					Conn: rewindConn,
 				}
 				return
-			case 3, 4:
-				log.Info("tls next is ss or torjan")
+			case 3, 4, 5:
+				log.Info("tls next is ss or torjan or vmess")
 				s.connChan <- &transport.Conn{
 					Conn: rewindConn,
 				}
@@ -201,6 +202,16 @@ func (s *Server) AcceptConn(overlay tunnel.Tunnel) (tunnel.Conn, error) {
 	}
 	if _, ok := overlay.(*trojan.Tunnel); ok {
 		atomic.StoreInt32(&s.nextProtocol, 4)
+		log.Info("next proto trojan")
+		select {
+		case conn := <-s.connChan:
+			return conn, nil
+		case <-s.ctx.Done():
+			return nil, common.NewError("transport server closed")
+		}
+	}
+	if _, ok := overlay.(*vmess.Tunnel); ok {
+		atomic.StoreInt32(&s.nextProtocol, 5)
 		log.Info("next proto trojan")
 		select {
 		case conn := <-s.connChan:
