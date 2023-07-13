@@ -321,6 +321,7 @@ func (s *Server) handshake(c *InboundConn) error {
 	case AtypIP4:
 		l = net.IPv4len
 		addr.IP = make(net.IP, net.IPv4len)
+		addr.AddressType = tunnel.IPv4
 	case AtypDomain:
 		// 解码域名的长度
 		reqLength := GetBuffer(1)
@@ -332,9 +333,11 @@ func (s *Server) handshake(c *InboundConn) error {
 		stream.XORKeyStream(reqLength, reqLength)
 		fullReq.Write(reqLength)
 		l = int(reqLength[0])
+		addr.AddressType = tunnel.DomainName
 	case AtypIP6:
 		l = net.IPv6len
 		addr.IP = make(net.IP, net.IPv6len)
+		addr.AddressType = tunnel.IPv6
 	default:
 		return fmt.Errorf("unknown address type %v", req[40])
 	}
