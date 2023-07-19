@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/faireal/trojan-go/api/service"
 	"github.com/faireal/trojan-go/common"
 	"github.com/faireal/trojan-go/config"
 	"github.com/faireal/trojan-go/log"
@@ -43,6 +44,7 @@ type InboundConn struct {
 
 	net.Conn
 	auth     statistic.Authenticator
+	user     statistic.User
 	hash     string
 	metadata *tunnel.Metadata
 	ip       string
@@ -129,6 +131,7 @@ func (c *InboundConn) Write(p []byte) (int, error) {
 	}
 	n, err := c.dataWriter.Write(p)
 	atomic.AddUint64(&c.sent, uint64(n))
+	c.user.AddTraffic(n, 0)
 	return n, err
 }
 
@@ -160,12 +163,16 @@ func (c *InboundConn) Read(p []byte) (n int, err error) {
 	}
 	n, err = c.dataReader.Read(p)
 	atomic.AddUint64(&c.recv, uint64(n))
+	c.user.AddTraffic(0, n)
 	return n, err
 }
 
-//func (c *InboundConn) Auth() error {
-//	return nil
-//}
+func (c *InboundConn) Close() error {
+	log.Info("user", c.hash, "from", c.Conn.RemoteAddr(), "tunneling to", c.metadata.Address, "closed",
+		"sent:", common.HumanFriendlyTraffic(atomic.LoadUint64(&c.sent)), "recv:", common.HumanFriendlyTraffic(atomic.LoadUint64(&c.recv)))
+	c.user.DelIP(c.ip)
+	return c.Conn.Close()
+}
 
 type Server struct {
 	auth      statistic.Authenticator
@@ -256,7 +263,6 @@ func (s *Server) handshake(c *InboundConn) error {
 	if err != nil {
 		return err
 	}
-	var user statistic.User
 	var timestamp int64
 	s.mux4Hashes.RLock()
 	uat, found := s.userHashes[auth]
@@ -264,7 +270,7 @@ func (s *Server) handshake(c *InboundConn) error {
 		s.mux4Hashes.RUnlock()
 		return errors.New("invalid user or tainted")
 	}
-	user = uat.user
+	c.user = uat.user
 	timestamp = uat.timeInc + s.baseTime
 	s.mux4Hashes.RUnlock()
 	//
@@ -273,7 +279,7 @@ func (s *Server) handshake(c *InboundConn) error {
 	fullReq := GetWriteBuffer()
 	defer PutWriteBuffer(fullReq)
 	// 创建一个AES  加密器
-	cmdkey := user.CmdKey()
+	cmdkey := c.user.CmdKey()
 	block, err := aes.NewCipher(cmdkey[:])
 	if err != nil {
 		return err
@@ -293,7 +299,7 @@ func (s *Server) handshake(c *InboundConn) error {
 	copy(c.reqBodyKey[:], req[17:33]) // 16 bytes, 数据加密 Key
 
 	var sid SessionId
-	uuid := user.UUID()
+	uuid := c.user.UUID()
 	copy(sid.user[:], uuid[:])
 	sid.key = c.reqBodyKey
 	sid.nonce = c.reqBodyIV
@@ -372,6 +378,18 @@ func (s *Server) handshake(c *InboundConn) error {
 		return errors.New("invalid req")
 	}
 	c.metadata = &tunnel.Metadata{Command: tunnel.Command(cmd), Address: addr}
+
+	// ip 限制
+	ip, _, err := net.SplitHostPort(c.Conn.RemoteAddr().String())
+	if err != nil {
+		return common.NewError("failed to parse host:" + c.Conn.RemoteAddr().String()).Base(err)
+	}
+
+	c.ip = ip
+	ok := c.user.AddIP(ip)
+	if !ok {
+		return common.NewError("ip limit reached")
+	}
 	return nil
 
 }
@@ -392,6 +410,9 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		cancel:    cancel,
 		connChan:  make(chan tunnel.Conn, 32),
 		redir:     redirector.NewRedirector(ctx),
+	}
+	if cfg.API.Enabled {
+		go service.RunServerAPI(ctx, auth)
 	}
 	err = s.auth.AddUser(cfg.UUID)
 	if err != nil {
