@@ -228,7 +228,7 @@ type Client struct {
 	underlay tunnel.Client
 	ctx      context.Context
 	cancel   context.CancelFunc
-	users    []*User
+	user     *User
 	opt      byte
 	security byte
 }
@@ -259,8 +259,7 @@ func (c *Client) DialPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
 }
 
 func (c *Client) handshake(conn *OutboundConn) error {
-	r := rand.Intn(len(c.users))
-	conn.user = c.users[r]
+	conn.user = c.user
 	randBytes := GetBuffer(32)
 	rand.Read(randBytes)
 	copy(conn.reqBodyIV[:], randBytes[:16])
@@ -300,8 +299,8 @@ func NewClient(ctx context.Context, client tunnel.Client) (*Client, error) {
 		return nil, err
 	}
 	user := NewUser(uuid)
-	c.users = append(c.users, user)
-	c.users = append(c.users, user.GenAlterIDUsers(cfg.AlterID)...)
+	c.user = user
+	//c.users = append(c.users, user.GenAlterIDUsers(cfg.AlterID)...)
 	c.opt = OptChunkStream
 	security := strings.ToLower(cfg.Security)
 	switch security {
