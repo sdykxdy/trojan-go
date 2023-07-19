@@ -14,6 +14,7 @@ import (
 	"github.com/faireal/trojan-go/log"
 	"github.com/faireal/trojan-go/redirector"
 	"github.com/faireal/trojan-go/statistic"
+	"github.com/faireal/trojan-go/statistic/memory"
 	"github.com/faireal/trojan-go/tunnel"
 	"golang.org/x/crypto/chacha20poly1305"
 	"hash/fnv"
@@ -61,7 +62,7 @@ type InboundConn struct {
 }
 
 type UserAtTime struct {
-	user    *User
+	user    statistic.User
 	timeInc int64
 	tainted bool // 是否被重放攻击污染
 }
@@ -167,14 +168,13 @@ func (c *InboundConn) Read(p []byte) (n int, err error) {
 //}
 
 type Server struct {
+	auth      statistic.Authenticator
 	redir     *redirector.Redirector
 	redirAddr *tunnel.Address
 	underlay  tunnel.Server
 	connChan  chan tunnel.Conn
 	ctx       context.Context
 	cancel    context.CancelFunc
-
-	users []*User
 
 	// userHashes用于校验VMess请求的认证信息部分
 	// sessionHistory保存一段时间内的请求用来检测重放攻击
@@ -256,7 +256,7 @@ func (s *Server) handshake(c *InboundConn) error {
 	if err != nil {
 		return err
 	}
-	var user *User
+	var user statistic.User
 	var timestamp int64
 	s.mux4Hashes.RLock()
 	uat, found := s.userHashes[auth]
@@ -273,7 +273,8 @@ func (s *Server) handshake(c *InboundConn) error {
 	fullReq := GetWriteBuffer()
 	defer PutWriteBuffer(fullReq)
 	// 创建一个AES  加密器
-	block, err := aes.NewCipher(user.CmdKey[:])
+	cmdkey := user.CmdKey()
+	block, err := aes.NewCipher(cmdkey[:])
 	if err != nil {
 		return err
 	}
@@ -292,7 +293,8 @@ func (s *Server) handshake(c *InboundConn) error {
 	copy(c.reqBodyKey[:], req[17:33]) // 16 bytes, 数据加密 Key
 
 	var sid SessionId
-	copy(sid.user[:], user.UUID[:])
+	uuid := user.UUID()
+	copy(sid.user[:], uuid[:])
 	sid.key = c.reqBodyKey
 	sid.nonce = c.reqBodyIV
 	s.mux4Sessions.Lock()
@@ -321,7 +323,6 @@ func (s *Server) handshake(c *InboundConn) error {
 	case AtypIP4:
 		l = net.IPv4len
 		addr.IP = make(net.IP, net.IPv4len)
-		addr.AddressType = tunnel.IPv4
 	case AtypDomain:
 		// 解码域名的长度
 		reqLength := GetBuffer(1)
@@ -333,11 +334,9 @@ func (s *Server) handshake(c *InboundConn) error {
 		stream.XORKeyStream(reqLength, reqLength)
 		fullReq.Write(reqLength)
 		l = int(reqLength[0])
-		addr.AddressType = tunnel.DomainName
 	case AtypIP6:
 		l = net.IPv6len
 		addr.IP = make(net.IP, net.IPv6len)
-		addr.AddressType = tunnel.IPv6
 	default:
 		return fmt.Errorf("unknown address type %v", req[40])
 	}
@@ -381,21 +380,23 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
 	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
+	auth, err := statistic.NewAuthenticator(ctx, memory.Name)
+	if err != nil {
+		return nil, common.NewError("vmess failed to create authenticator")
+	}
 	s := &Server{
 		underlay:  underlay,
+		auth:      auth,
 		ctx:       ctx,
 		redirAddr: redirAddr,
 		cancel:    cancel,
 		connChan:  make(chan tunnel.Conn, 32),
 		redir:     redirector.NewRedirector(ctx),
 	}
-	uuid, err := StrToUUID(cfg.UUID)
+	err = s.auth.AddUser(cfg.UUID)
 	if err != nil {
 		return nil, err
 	}
-	user := NewUser(uuid)
-	s.users = append(s.users, user)
-	s.users = append(s.users, user.GenAlterIDUsers(cfg.AlterID)...)
 	s.baseTime = time.Now().UTC().Unix() - cacheDurationSec*2
 	s.userHashes = make(map[[16]byte]*UserAtTime, 1024)
 	s.sessionHistory = make(map[SessionId]time.Time, 128)
@@ -427,8 +428,9 @@ func (s *Server) refresh() {
 	genBeginSec := nowSec - cacheDurationSec
 	genEndSec := nowSec + cacheDurationSec
 	var hashValue [16]byte
-	for _, user := range s.users {
-		hasher := hmac.New(md5.New, user.UUID[:])
+	for _, user := range s.auth.ListUsers() {
+		uuid := user.UUID()
+		hasher := hmac.New(md5.New, uuid[:])
 		for ts := genBeginSec; ts <= genEndSec; ts++ {
 			var b [8]byte
 			binary.BigEndian.PutUint64(b[:], uint64(ts))
@@ -459,4 +461,12 @@ func (s *Server) refresh() {
 		}
 	}
 	s.mux4Sessions.Unlock()
+}
+
+func (s *Server) AddUser(uuid string) error {
+	return nil
+}
+
+func (s *Server) DelUser(uuid string) error {
+	return nil
 }

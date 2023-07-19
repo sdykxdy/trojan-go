@@ -81,3 +81,9 @@ func TimestampHash(unixSec int64) []byte {
 	md5hash.Write(ts)
 	return md5hash.Sum(nil)
 }
+
+type Users []*User
+
+func (u User) Add() {
+
+}

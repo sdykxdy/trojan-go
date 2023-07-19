@@ -42,6 +42,8 @@ type OutboundConn struct {
 	opt      byte
 
 	metadata *tunnel.Metadata
+
+	username []byte
 }
 
 func (vc *OutboundConn) Write(b []byte) (int, error) {
@@ -180,7 +182,7 @@ func (vc *OutboundConn) Request() error {
 		buf.Write(vc.metadata.IP.To4())
 	case tunnel.IPv6:
 		buf.WriteByte(byte(3))
-		buf.Write(vc.metadata.IP.To4())
+		buf.Write(vc.metadata.IP.To16())
 	default:
 		return common.NewError("invalid ATYP " + strconv.FormatInt(int64(vc.metadata.AddressType), 10))
 	}
@@ -236,10 +238,13 @@ func (c *Client) DialConn(addr *tunnel.Address, t tunnel.Tunnel) (tunnel.Conn, e
 	if err != nil {
 		return nil, err
 	}
-	newConn := &OutboundConn{Conn: conn, metadata: &tunnel.Metadata{
-		Command: TCP,
-		Address: addr,
-	}}
+	newConn := &OutboundConn{
+		Conn: conn,
+		metadata: &tunnel.Metadata{
+			Command: TCP,
+			Address: addr,
+		},
+	}
 	err = c.handshake(newConn)
 	if err != nil {
 		return nil, err

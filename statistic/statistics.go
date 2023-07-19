@@ -20,6 +20,8 @@ type TrafficMeter interface {
 	GetSpeed() (sent, recv uint64)
 	GetSpeedLimit() (sent, recv int)
 	SetSpeedLimit(sent, recv int)
+	UUID() [16]byte
+	CmdKey() [16]byte
 }
 
 type IPRecorder interface {

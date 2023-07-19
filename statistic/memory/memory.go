@@ -29,6 +29,9 @@ type User struct {
 	sendSpeed uint64
 	recvSpeed uint64
 
+	uuid   [16]byte
+	cmdKey [16]byte
+
 	hash        string
 	ipTable     sync.Map
 	ipNum       int32
@@ -133,6 +136,14 @@ func (u *User) Hash() string {
 	return u.hash
 }
 
+func (u *User) CmdKey() [16]byte {
+	return u.cmdKey
+}
+
+func (u *User) UUID() [16]byte {
+	return u.uuid
+}
+
 func (u *User) SetTraffic(send, recv uint64) {
 	atomic.StoreUint64(&u.sent, send)
 	atomic.StoreUint64(&u.recv, recv)
@@ -186,6 +197,12 @@ func (a *Authenticator) AddUser(hash string) error {
 	if _, found := a.users.Load(hash); found {
 		return common.NewError("hash " + hash + " is already exist")
 	}
+	uuid, err := common.StrToUUID(hash)
+	if err != nil {
+		return err
+	}
+	var cmdkey [16]byte
+	copy(cmdkey[:], common.GetKey(uuid))
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &User{
 		hash:   hash,
