@@ -6,11 +6,8 @@ import (
 
 type MySQLConfig struct {
 	Enabled    bool   `json:"enabled" yaml:"enabled"`
-	ServerHost string `json:"server_addr" yaml:"server-addr"`
-	ServerPort int    `json:"server_port" yaml:"server-port"`
-	Database   string `json:"database" yaml:"database"`
-	Username   string `json:"username" yaml:"username"`
-	Password   string `json:"password" yaml:"password"`
+	DriverName string `json:"driver_name" yaml:"driver-name"`
+	DataSource string `json:"data_source" yaml:"data-source"`
 	CheckRate  int    `json:"check_rate" yaml:"check-rate"`
 }
 
@@ -22,8 +19,7 @@ func init() {
 	config.RegisterConfigCreator(Name, func() interface{} {
 		return &Config{
 			MySQL: MySQLConfig{
-				ServerPort: 3306,
-				CheckRate:  30,
+				CheckRate: 30,
 			},
 		}
 	})

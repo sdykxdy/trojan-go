@@ -16,6 +16,7 @@ import (
 	"github.com/faireal/trojan-go/redirector"
 	"github.com/faireal/trojan-go/statistic"
 	"github.com/faireal/trojan-go/statistic/memory"
+	"github.com/faireal/trojan-go/statistic/mysql"
 	"github.com/faireal/trojan-go/tunnel"
 	"golang.org/x/crypto/chacha20poly1305"
 	"hash/fnv"
@@ -401,8 +402,19 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	ctx, cancel := context.WithCancel(ctx)
 	redirAddr := tunnel.NewAddressFromHostPort("tcp", cfg.RemoteHost, cfg.RemotePort)
-	auth, err := statistic.NewAuthenticator(ctx, memory.Name)
+
+	// TODO replace this dirty code
+	var auth statistic.Authenticator
+	var err error
+	if cfg.MySQL.Enabled {
+		log.Debug("mysql enabled")
+		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
+	} else {
+		log.Debug("auth by config file")
+		auth, err = statistic.NewAuthenticator(ctx, memory.Name)
+	}
 	if err != nil {
+		cancel()
 		return nil, common.NewError("vmess failed to create authenticator")
 	}
 	s := &Server{

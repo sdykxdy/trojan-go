@@ -3,8 +3,6 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"strings"
 	"time"
 
 	// MySQL Driver
@@ -33,7 +31,7 @@ func (a *Authenticator) updater() {
 			hash := user.Hash()
 			sent, recv := user.ResetTraffic()
 
-			s, err := a.db.Exec("UPDATE `users` SET `upload`=`upload`+?, `download`=`download`+? WHERE `password`=?;", recv, sent, hash)
+			s, err := a.db.Exec("UPDATE `users` SET `upload`=`upload`+?, `download`=`download`+? WHERE `uuid`=?;", recv, sent, hash)
 			if err != nil {
 				log.Error(common.NewError("failed to update data to user table").Base(err))
 				continue
@@ -47,7 +45,7 @@ func (a *Authenticator) updater() {
 		log.Info("buffered data has been written into the database")
 
 		// update memory
-		rows, err := a.db.Query("SELECT password,quota,download,upload FROM users")
+		rows, err := a.db.Query("SELECT uuid,quota,download,upload FROM users")
 		if err != nil || rows.Err() != nil {
 			log.Error(common.NewError("failed to pull data from the database").Base(err))
 			time.Sleep(a.updateDuration)
@@ -77,20 +75,14 @@ func (a *Authenticator) updater() {
 	}
 }
 
-func connectDatabase(driverName, username, password, ip string, port int, dbName string) (*sql.DB, error) {
-	path := strings.Join([]string{username, ":", password, "@tcp(", ip, ":", fmt.Sprintf("%d", port), ")/", dbName, "?charset=utf8"}, "")
-	return sql.Open(driverName, path)
+func connectDatabase(driverName, dataSource string) (*sql.DB, error) {
+	return sql.Open(driverName, dataSource)
 }
 
 func NewAuthenticator(ctx context.Context) (statistic.Authenticator, error) {
 	cfg := config.FromContext(ctx, Name).(*Config)
 	db, err := connectDatabase(
-		"mysql",
-		cfg.MySQL.Username,
-		cfg.MySQL.Password,
-		cfg.MySQL.ServerHost,
-		cfg.MySQL.ServerPort,
-		cfg.MySQL.Database,
+		cfg.MySQL.DriverName, cfg.MySQL.DataSource,
 	)
 	if err != nil {
 		return nil, common.NewError("Failed to connect to database server").Base(err)
