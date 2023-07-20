@@ -407,11 +407,11 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	var auth statistic.Authenticator
 	var err error
 	if cfg.MySQL.Enabled {
-		log.Debug("mysql enabled")
-		auth, err = statistic.NewAuthenticator(ctx, mysql.Name)
+		log.Info("mysql enabled")
+		auth, err = mysql.NewAuthenticator(ctx)
 	} else {
-		log.Debug("auth by config file")
-		auth, err = statistic.NewAuthenticator(ctx, memory.Name)
+		log.Info("auth by config file")
+		auth, err = memory.NewAuthenticator(ctx)
 	}
 	if err != nil {
 		cancel()
