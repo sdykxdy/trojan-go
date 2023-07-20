@@ -59,7 +59,7 @@ func (a *Authenticator) updater() {
 				log.Error(common.NewError("failed to obtain data from the query result").Base(err))
 				break
 			}
-			if download+upload < quota || quota < 0 {
+			if download+upload < quota || quota <= 0 {
 				a.AddUser(hash)
 			} else {
 				a.DelUser(hash)
