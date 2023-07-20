@@ -449,7 +449,8 @@ func (s *Server) refresh() {
 	genBeginSec := nowSec - cacheDurationSec
 	genEndSec := nowSec + cacheDurationSec
 	var hashValue [16]byte
-	for _, user := range s.auth.ListUsers() {
+	users := s.auth.ListUsers()
+	for _, user := range users {
 		uuid := user.UUID()
 		hasher := hmac.New(md5.New, uuid[:])
 		for ts := genBeginSec; ts <= genEndSec; ts++ {

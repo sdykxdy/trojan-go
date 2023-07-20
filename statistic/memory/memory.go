@@ -205,6 +205,8 @@ func (a *Authenticator) AddUser(hash string) error {
 	copy(cmdkey[:], common.GetKey(uuid))
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &User{
+		uuid:   uuid,
+		cmdKey: cmdkey,
 		hash:   hash,
 		ctx:    ctx,
 		cancel: cancel,
