@@ -110,12 +110,12 @@ func (u *User) SetSpeedLimit(send, recv int) {
 	if send <= 0 {
 		u.sendLimiter = nil
 	} else {
-		u.sendLimiter = rate.NewLimiter(rate.Limit(send), send*2)
+		u.sendLimiter = rate.NewLimiter(rate.Limit(send), send)
 	}
 	if recv <= 0 {
 		u.recvLimiter = nil
 	} else {
-		u.recvLimiter = rate.NewLimiter(rate.Limit(recv), recv*2)
+		u.recvLimiter = rate.NewLimiter(rate.Limit(recv), recv)
 	}
 }
 
