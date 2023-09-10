@@ -433,6 +433,13 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	ok, u := s.auth.AuthUser(cfg.UUID)
+	if !ok {
+		log.Error("failed to auth user:", cfg.UUID)
+		return nil, errors.New("failed to auth user")
+	}
+	// 兼容alerid
+	u.GenAlterID(cfg.AlterID)
 	s.baseTime = time.Now().UTC().Unix() - cacheDurationSec*2
 	s.userHashes = make(map[[16]byte]*UserAtTime, 1024)
 	s.sessionHistory = make(map[SessionId]time.Time, 128)
@@ -466,21 +473,24 @@ func (s *Server) refresh() {
 	var hashValue [16]byte
 	users := s.auth.ListUsers()
 	for _, user := range users {
-		uuid := user.UUID()
-		hasher := hmac.New(md5.New, uuid[:])
-		for ts := genBeginSec; ts <= genEndSec; ts++ {
-			var b [8]byte
-			binary.BigEndian.PutUint64(b[:], uint64(ts))
-			hasher.Write(b[:])
-			hasher.Sum(hashValue[:0])
-			hasher.Reset()
+		//uuid := user.UUID()
+		for _, uuid := range user.UUIDs() {
+			hasher := hmac.New(md5.New, uuid[:])
+			for ts := genBeginSec; ts <= genEndSec; ts++ {
+				var b [8]byte
+				binary.BigEndian.PutUint64(b[:], uint64(ts))
+				hasher.Write(b[:])
+				hasher.Sum(hashValue[:0])
+				hasher.Reset()
 
-			s.userHashes[hashValue] = &UserAtTime{
-				user:    user,
-				timeInc: ts - s.baseTime,
-				tainted: false,
+				s.userHashes[hashValue] = &UserAtTime{
+					user:    user,
+					timeInc: ts - s.baseTime,
+					tainted: false,
+				}
 			}
 		}
+
 	}
 	if genBeginSec > s.baseTime {
 		for k, v := range s.userHashes {

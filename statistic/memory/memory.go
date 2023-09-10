@@ -31,6 +31,7 @@ type User struct {
 
 	uuid   [16]byte
 	cmdKey [16]byte
+	uuids  [][16]byte
 
 	hash        string
 	ipTable     sync.Map
@@ -144,6 +145,21 @@ func (u *User) UUID() [16]byte {
 	return u.uuid
 }
 
+func (u *User) UUIDs() [][16]byte {
+	return u.uuids
+}
+
+func (u *User) GenAlterID(alterID int) {
+	uuids := make([][16]byte, alterID)
+	uuids = append(uuids, u.uuid)
+	for i := 0; i < alterID; i++ {
+		newID := common.NextID(u.uuid)
+		// NOTE: alterID user is a user which have a different uuid but a same cmdkey with the primary user.
+		uuids = append(uuids, newID)
+	}
+	u.uuids = uuids
+}
+
 func (u *User) SetTraffic(send, recv uint64) {
 	atomic.StoreUint64(&u.sent, send)
 	atomic.StoreUint64(&u.recv, recv)
@@ -206,6 +222,7 @@ func (a *Authenticator) AddUser(hash string) error {
 	ctx, cancel := context.WithCancel(a.ctx)
 	meter := &User{
 		uuid:   uuid,
+		uuids:  [][16]byte{uuid},
 		cmdKey: cmdkey,
 		hash:   hash,
 		ctx:    ctx,
