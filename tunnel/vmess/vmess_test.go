@@ -35,7 +35,7 @@ func TestVmessServer(t *testing.T) {
 		RemotePort: util.EchoPort,
 		UUID:       "a684455c-b14f-11ea-bf0d-42010aaa0003",
 		Security:   "none",
-		AlterID:    2,
+		AlterID:    1,
 		API:        APIConfig{Enabled: true},
 	}
 	// API

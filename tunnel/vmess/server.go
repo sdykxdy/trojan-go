@@ -29,7 +29,7 @@ import (
 
 const (
 	updateInterval   = 30 * time.Second
-	cacheDurationSec = 120
+	cacheDurationSec = 60
 	sessionTimeOut   = 3 * time.Minute
 )
 
@@ -433,13 +433,6 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	ok, u := s.auth.AuthUser(cfg.UUID)
-	if !ok {
-		log.Error("failed to auth user:", cfg.UUID)
-		return nil, errors.New("failed to auth user")
-	}
-	// 兼容alerid
-	u.GenAlterID(cfg.AlterID)
 	s.baseTime = time.Now().UTC().Unix() - cacheDurationSec*2
 	s.userHashes = make(map[[16]byte]*UserAtTime, 1024)
 	s.sessionHistory = make(map[SessionId]time.Time, 128)

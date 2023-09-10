@@ -150,7 +150,7 @@ func (u *User) UUIDs() [][16]byte {
 }
 
 func (u *User) GenAlterID(alterID int) {
-	uuids := make([][16]byte, alterID)
+	uuids := make([][16]byte, 0)
 	uuids = append(uuids, u.uuid)
 	for i := 0; i < alterID; i++ {
 		newID := common.NextID(u.uuid)
@@ -228,6 +228,7 @@ func (a *Authenticator) AddUser(hash string) error {
 		ctx:    ctx,
 		cancel: cancel,
 	}
+	meter.GenAlterID(1)
 	go meter.speedUpdater()
 	a.users.Store(hash, meter)
 	return nil
