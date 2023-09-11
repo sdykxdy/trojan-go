@@ -30,7 +30,7 @@ type Proxy struct {
 
 func (p *Proxy) Run() error {
 	p.relayConnLoop()
-	p.relayPacketLoop()
+	//p.relayPacketLoop()
 	<-p.ctx.Done()
 	return nil
 }

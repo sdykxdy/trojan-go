@@ -7,6 +7,7 @@ import (
 	"github.com/faireal/trojan-go/common"
 	"github.com/faireal/trojan-go/config"
 	_ "github.com/faireal/trojan-go/log/golog"
+	"github.com/faireal/trojan-go/proxy"
 	"github.com/faireal/trojan-go/statistic/memory"
 	"github.com/faireal/trojan-go/test/util"
 	"github.com/faireal/trojan-go/tunnel"
@@ -34,7 +35,7 @@ func TestVmessServer(t *testing.T) {
 		RemoteHost: "127.0.0.1",
 		RemotePort: util.EchoPort,
 		UUID:       "a684455c-b14f-11ea-bf0d-42010aaa0003",
-		Security:   "none",
+		Security:   "aes-128-gcm",
 		AlterID:    1,
 		API:        APIConfig{Enabled: true},
 	}
@@ -79,7 +80,7 @@ func TestVmessClient(t *testing.T) {
 	common.Must(err)
 	clientConfig := &Config{
 		UUID:     "a684455c-b14f-11ea-bf0d-42010aaa0003",
-		Security: "none",
+		Security: "aes-128-gcm",
 		AlterID:  4,
 	}
 	clientCtx := config.WithConfig(ctx, Name, clientConfig)
@@ -151,4 +152,51 @@ func TestVmess(t *testing.T) {
 	c.Close()
 	s.Close()
 	cancel()
+}
+
+func TestVmessServerProxy(t *testing.T) {
+	port := 1234
+	transportConfig := &transport.Config{
+		LocalHost:  "127.0.0.1",
+		LocalPort:  port,
+		RemoteHost: "127.0.0.1",
+		RemotePort: port,
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	ctx = config.WithConfig(ctx, transport.Name, transportConfig)
+	ctx = config.WithConfig(ctx, freedom.Name, &freedom.Config{})
+	tcpServer, err := transport.NewServer(ctx, nil)
+	common.Must(err)
+
+	serverConfig := &Config{
+		RemoteHost: "127.0.0.1",
+		RemotePort: util.EchoPort,
+		UUID:       "a684455c-b14f-11ea-bf0d-42010aaa0003",
+		Security:   "none",
+		AlterID:    2,
+		API:        APIConfig{Enabled: true},
+	}
+	// API
+	APIconfig := &service.Config{service.APIConfig{
+		Enabled: true,
+		APIHost: "",
+		APIPort: 20001,
+	}}
+	// mem
+	menConfig := &memory.Config{
+		Passwords: nil,
+	}
+	ctx = config.WithConfig(ctx, Name, serverConfig)
+	ctx = config.WithConfig(ctx, service.Name, APIconfig)
+	ctx = config.WithConfig(ctx, memory.Name, menConfig)
+	s, err := NewServer(ctx, tcpServer)
+	common.Must(err)
+	clientStack := []string{freedom.Name}
+	clientList, err := proxy.CreateClientStack(ctx, clientStack)
+	if err != nil {
+		common.Must(err)
+		cancel()
+	}
+	proxy.NewProxy(ctx, cancel, []tunnel.Server{s}, clientList).Run()
+
 }

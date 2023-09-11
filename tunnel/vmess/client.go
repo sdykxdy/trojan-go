@@ -268,6 +268,8 @@ func (c *Client) handshake(conn *OutboundConn) error {
 	conn.reqRespV = byte(rand.Intn(1 << 8))
 	conn.respBodyIV = md5.Sum(conn.reqBodyIV[:])
 	conn.respBodyKey = md5.Sum(conn.reqBodyKey[:])
+	conn.opt = OptChunkStream
+	conn.security = c.security
 
 	// Auth
 	err := conn.Auth()

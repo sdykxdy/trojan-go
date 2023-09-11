@@ -114,18 +114,18 @@ func (c *InboundConn) Write(p []byte) (int, error) {
 				c.dataWriter = ChunkedWriter(c.Conn)
 
 			case SecurityAES128GCM:
-				block, _ := aes.NewCipher(c.reqBodyKey[:])
+				block, _ := aes.NewCipher(c.respBodyKey[:])
 				aead, _ := cipher.NewGCM(block)
-				c.dataWriter = AEADWriter(c.Conn, aead, c.reqBodyIV[:])
+				c.dataWriter = AEADWriter(c.Conn, aead, c.respBodyIV[:])
 
 			case SecurityChacha20Poly1305:
 				key := GetBuffer(32)
-				t := md5.Sum(c.reqBodyKey[:])
+				t := md5.Sum(c.respBodyKey[:])
 				copy(key, t[:])
 				t = md5.Sum(key[:16])
 				copy(key[16:], t[:])
 				aead, _ := chacha20poly1305.New(key)
-				c.dataWriter = AEADWriter(c.Conn, aead, c.reqBodyIV[:])
+				c.dataWriter = AEADWriter(c.Conn, aead, c.respBodyIV[:])
 				PutBuffer(key)
 			}
 		}
