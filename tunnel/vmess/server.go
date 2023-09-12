@@ -29,7 +29,7 @@ import (
 
 const (
 	updateInterval   = 30 * time.Second
-	cacheDurationSec = 60
+	cacheDurationSec = 120
 	sessionTimeOut   = 3 * time.Minute
 )
 
