@@ -318,7 +318,7 @@ func (s *Server) handshake(c *InboundConn) error {
 	padingLen := int(req[35] >> 4) // 4 bits, 余量 P
 	c.security = req[35] & 0x0F    // 4 bits, 加密方式 Sec
 	cmd := req[37]                 // 1 byte, 指令 Cmd
-	if cmd != CmdTCP {
+	if cmd != CmdTCP || cmd != CmdUDP {
 		return fmt.Errorf("unsuppoted command %v", cmd)
 	}
 
