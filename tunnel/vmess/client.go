@@ -26,6 +26,10 @@ const (
 	UDP tunnel.Command = 2
 )
 
+const (
+	MaxPacketSize = 1024 * 8
+)
+
 type OutboundConn struct {
 	user *User
 	net.Conn

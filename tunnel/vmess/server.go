@@ -176,13 +176,14 @@ func (c *InboundConn) Close() error {
 }
 
 type Server struct {
-	auth      statistic.Authenticator
-	redir     *redirector.Redirector
-	redirAddr *tunnel.Address
-	underlay  tunnel.Server
-	connChan  chan tunnel.Conn
-	ctx       context.Context
-	cancel    context.CancelFunc
+	auth       statistic.Authenticator
+	redir      *redirector.Redirector
+	redirAddr  *tunnel.Address
+	underlay   tunnel.Server
+	connChan   chan tunnel.Conn
+	packetChan chan tunnel.PacketConn
+	ctx        context.Context
+	cancel     context.CancelFunc
 
 	// userHashes用于校验VMess请求的认证信息部分
 	// sessionHistory保存一段时间内的请求用来检测重放攻击
@@ -226,8 +227,19 @@ func (s *Server) acceptLoop() {
 				return
 			}
 			rewindConn.StopBuffering()
-			s.connChan <- inboundConn
-			log.Debug("normal vmess connection")
+			switch inboundConn.metadata.Command {
+			case TCP:
+				s.connChan <- inboundConn
+				log.Debug("normal vmess tcp connection")
+			case UDP:
+				s.packetChan <- &PacketConn{
+					Conn: inboundConn,
+				}
+				log.Debug("vmess udp connection")
+			default:
+				log.Error("unknown vmess command", inboundConn.metadata.Command)
+			}
+
 		}(conn)
 	}
 
@@ -238,13 +250,17 @@ func (s *Server) AcceptConn(t tunnel.Tunnel) (tunnel.Conn, error) {
 	case c := <-s.connChan:
 		return c, nil
 	case <-s.ctx.Done():
-		return nil, common.NewError("vmess client closed")
+		return nil, common.NewError("vmess tcp client closed")
 	}
 }
 
-func (s *Server) AcceptPacket(t tunnel.Tunnel) (tunnel.PacketConn, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *Server) AcceptPacket(tunnel tunnel.Tunnel) (tunnel.PacketConn, error) {
+	select {
+	case t := <-s.packetChan:
+		return t, nil
+	case <-s.ctx.Done():
+		return nil, common.NewError("vmess udp client closed")
+	}
 }
 
 func (s *Server) Close() error {
@@ -418,13 +434,14 @@ func NewServer(ctx context.Context, underlay tunnel.Server) (*Server, error) {
 		return nil, common.NewError("vmess failed to create authenticator")
 	}
 	s := &Server{
-		underlay:  underlay,
-		auth:      auth,
-		ctx:       ctx,
-		redirAddr: redirAddr,
-		cancel:    cancel,
-		connChan:  make(chan tunnel.Conn, 32),
-		redir:     redirector.NewRedirector(ctx),
+		underlay:   underlay,
+		auth:       auth,
+		ctx:        ctx,
+		redirAddr:  redirAddr,
+		cancel:     cancel,
+		connChan:   make(chan tunnel.Conn, 32),
+		packetChan: make(chan tunnel.PacketConn, 32),
+		redir:      redirector.NewRedirector(ctx),
 	}
 	if cfg.API.Enabled {
 		go service.RunServerAPI(ctx, auth)
