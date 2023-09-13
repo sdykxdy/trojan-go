@@ -26,11 +26,14 @@ func (c *PacketConn) WriteTo(payload []byte, addr net.Addr) (int, error) {
 }
 
 func (c *PacketConn) WriteWithMetadata(payload []byte, metadata *tunnel.Metadata) (int, error) {
-	log.Debug("udp packet remote", c.RemoteAddr(), "metadata", metadata, "size", len(payload))
-	return c.Conn.Write(payload)
+	n, err := c.Conn.Write(payload)
+	log.Info("udp packet remote", c.RemoteAddr(), "metadata", metadata, "size", n)
+	return n, err
 }
 
 func (c *PacketConn) ReadWithMetadata(payload []byte) (int, *tunnel.Metadata, error) {
-	n, err := c.Read(payload)
+	n, err := c.Conn.Read(payload)
+	c.Metadata().Address.NetworkType = "udp"
+	log.Info("udp packet from", c.RemoteAddr(), "metadata", c.Metadata(), "size", n)
 	return n, c.Metadata(), err
 }

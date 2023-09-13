@@ -30,7 +30,7 @@ type Proxy struct {
 
 func (p *Proxy) Run() error {
 	p.relayConnLoop()
-	//p.relayPacketLoop()
+	p.relayPacketLoop()
 	<-p.ctx.Done()
 	return nil
 }
@@ -118,7 +118,7 @@ func (p *Proxy) relayPacketLoop() {
 						for {
 							buf := make([]byte, MaxPacketSize)
 							n, metadata, err := a.ReadWithMetadata(buf)
-							if err != nil {
+							if err != nil && err != io.EOF {
 								errChan <- err
 								return
 							}
@@ -127,7 +127,7 @@ func (p *Proxy) relayPacketLoop() {
 								return
 							}
 							_, err = b.WriteWithMetadata(buf[:n], metadata)
-							if err != nil {
+							if err != nil && err != io.EOF {
 								errChan <- err
 								return
 							}
