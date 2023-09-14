@@ -8,6 +8,8 @@ const (
 	OptChunkStream byte = 1 // 分块传输，每个分块使用如下Security方法加密
 	// OptReuseTCPConnection byte = 2
 	// OptMetadataObfuscate  byte = 4
+	OptChunkMasking  byte = 4
+	OptGlobalPadding byte = 8
 )
 
 // Security types
@@ -15,6 +17,7 @@ const (
 	SecurityAES128GCM        byte = 3
 	SecurityChacha20Poly1305 byte = 4
 	SecurityNone             byte = 5
+	SecurityZero             byte = 6
 )
 
 // CMD types

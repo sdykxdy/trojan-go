@@ -108,15 +108,28 @@ func (c *InboundConn) Write(p []byte) (int, error) {
 
 		// 编码内容
 		c.dataWriter = c.Conn
+
+		var shakeParser *ShakeSizeParser
+
+		if c.opt&OptChunkMasking == OptChunkMasking {
+
+			shouldPad := false
+			if c.opt&OptGlobalPadding == OptGlobalPadding {
+				shouldPad = true
+
+			}
+			shakeParser = NewShakeSizeParser(c.respBodyIV[:], shouldPad)
+		}
+
 		if c.opt&OptChunkStream == OptChunkStream {
 			switch c.security {
 			case SecurityNone:
-				c.dataWriter = newChunkWriter(c.Conn)
+				c.dataWriter = newChunkWriter(c.Conn, shakeParser)
 
 			case SecurityAES128GCM:
 				block, _ := aes.NewCipher(c.respBodyKey[:])
 				aead, _ := cipher.NewGCM(block)
-				c.dataWriter = newAEADWriter(c.Conn, aead, c.respBodyIV[:])
+				c.dataWriter = newAEADWriter(c.Conn, aead, c.respBodyIV[:], shakeParser)
 
 			case SecurityChacha20Poly1305:
 				key := GetBuffer(32)
@@ -125,7 +138,7 @@ func (c *InboundConn) Write(p []byte) (int, error) {
 				t = md5.Sum(key[:16])
 				copy(key[16:], t[:])
 				aead, _ := chacha20poly1305.New(key)
-				c.dataWriter = newAEADWriter(c.Conn, aead, c.respBodyIV[:])
+				c.dataWriter = newAEADWriter(c.Conn, aead, c.respBodyIV[:], shakeParser)
 				PutBuffer(key)
 			}
 		}
@@ -140,15 +153,28 @@ func (c *InboundConn) Read(p []byte) (n int, err error) {
 	if c.dataReader == nil {
 		// 解码数据部分
 		c.dataReader = c.Conn
+
+		var shakeParser *ShakeSizeParser
+
+		if c.opt&OptChunkMasking == OptChunkMasking {
+
+			shouldPad := false
+			if c.opt&OptGlobalPadding == OptGlobalPadding {
+				shouldPad = true
+
+			}
+			shakeParser = NewShakeSizeParser(c.reqBodyIV[:], shouldPad)
+		}
+
 		if c.opt&OptChunkStream == OptChunkStream {
 			switch c.security {
 			case SecurityNone:
-				c.dataReader = newChunkReader(c.Conn)
+				c.dataReader = newChunkReader(c.Conn, shakeParser)
 
 			case SecurityAES128GCM:
 				block, _ := aes.NewCipher(c.reqBodyKey[:])
 				aead, _ := cipher.NewGCM(block)
-				c.dataReader = newAEADReader(c.Conn, aead, c.reqBodyIV[:])
+				c.dataReader = newAEADReader(c.Conn, aead, c.reqBodyIV[:], shakeParser)
 
 			case SecurityChacha20Poly1305:
 				key := GetBuffer(32)
@@ -157,7 +183,7 @@ func (c *InboundConn) Read(p []byte) (n int, err error) {
 				t = md5.Sum(key[:16])
 				copy(key[16:], t[:])
 				aead, _ := chacha20poly1305.New(key)
-				c.dataReader = newAEADReader(c.Conn, aead, c.reqBodyIV[:])
+				c.dataReader = newAEADReader(c.Conn, aead, c.reqBodyIV[:], shakeParser)
 				PutBuffer(key)
 			}
 		}

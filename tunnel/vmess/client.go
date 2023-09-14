@@ -56,12 +56,12 @@ func (vc *OutboundConn) Write(b []byte) (int, error) {
 		if vc.opt&OptChunkStream == OptChunkStream {
 			switch vc.security {
 			case SecurityNone:
-				vc.writer = newChunkWriter(vc.Conn)
+				vc.writer = newChunkWriter(vc.Conn, nil)
 
 			case SecurityAES128GCM:
 				block, _ := aes.NewCipher(vc.reqBodyKey[:])
 				aead, _ := cipher.NewGCM(block)
-				vc.writer = newAEADWriter(vc.Conn, aead, vc.reqBodyIV[:])
+				vc.writer = newAEADWriter(vc.Conn, aead, vc.reqBodyIV[:], nil)
 
 			case SecurityChacha20Poly1305:
 				key := GetBuffer(32)
@@ -70,7 +70,7 @@ func (vc *OutboundConn) Write(b []byte) (int, error) {
 				t = md5.Sum(key[:16])
 				copy(key[16:], t[:])
 				aead, _ := chacha20poly1305.New(key)
-				vc.writer = newAEADWriter(vc.Conn, aead, vc.reqBodyIV[:])
+				vc.writer = newAEADWriter(vc.Conn, aead, vc.reqBodyIV[:], nil)
 				PutBuffer(key)
 			}
 		}
@@ -89,12 +89,12 @@ func (vc *OutboundConn) Read(b []byte) (int, error) {
 		if vc.opt&OptChunkStream == OptChunkStream {
 			switch vc.security {
 			case SecurityNone:
-				vc.reader = newChunkReader(vc.Conn)
+				vc.reader = newChunkReader(vc.Conn, nil)
 
 			case SecurityAES128GCM:
 				block, _ := aes.NewCipher(vc.respBodyKey[:])
 				aead, _ := cipher.NewGCM(block)
-				vc.reader = newAEADReader(vc.Conn, aead, vc.respBodyIV[:])
+				vc.reader = newAEADReader(vc.Conn, aead, vc.respBodyIV[:], nil)
 
 			case SecurityChacha20Poly1305:
 				key := GetBuffer(32)
@@ -103,7 +103,7 @@ func (vc *OutboundConn) Read(b []byte) (int, error) {
 				t = md5.Sum(key[:16])
 				copy(key[16:], t[:])
 				aead, _ := chacha20poly1305.New(key)
-				vc.reader = newAEADReader(vc.Conn, aead, vc.respBodyIV[:])
+				vc.reader = newAEADReader(vc.Conn, aead, vc.respBodyIV[:], nil)
 				PutBuffer(key)
 			}
 		}

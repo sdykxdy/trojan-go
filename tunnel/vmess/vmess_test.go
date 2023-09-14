@@ -200,3 +200,15 @@ func TestVmessServerProxy(t *testing.T) {
 	proxy.NewProxy(ctx, cancel, []tunnel.Server{s}, clientList).Run()
 
 }
+
+func TestShake(t *testing.T) {
+	parser := NewShakeSizeParser([]byte{0, 1, 2, 3}, false)
+	buf := make([]byte, 2)
+	parser.Encode(uint16(8+8), buf)
+	fmt.Println(buf)
+	decode, err := parser.Decode(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(decode)
+}
