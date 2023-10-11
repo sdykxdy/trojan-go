@@ -65,8 +65,10 @@ func (a *Authenticator) updater() {
 				a.DelUser(hash)
 			}
 			if bandwidth > 0 {
-				_, u := a.AuthUser(hash)
-				u.SetSpeedLimit(int(bandwidth), int(bandwidth))
+				ok, u := a.AuthUser(hash)
+				if ok {
+					u.SetSpeedLimit(int(bandwidth), int(bandwidth))
+				}
 			}
 		}
 
