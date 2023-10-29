@@ -1,6 +1,6 @@
 module github.com/sdykxdy/trojan-go
 
-go 1.20
+go 1.18
 
 require (
 	github.com/Dreamacro/protobytes v0.0.0-20230911123819-0bbf144b9b9a
