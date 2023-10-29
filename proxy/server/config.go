@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/faireal/trojan-go/config"
-	"github.com/faireal/trojan-go/proxy/client"
+	"github.com/sdykxdy/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/proxy/client"
 )
 
 func init() {

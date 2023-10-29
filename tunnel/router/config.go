@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/config"
 )
 
 type Config struct {

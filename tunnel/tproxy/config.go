@@ -3,7 +3,7 @@
 
 package tproxy
 
-import "github.com/faireal/trojan-go/config"
+import "github.com/sdykxdy/trojan-go/config"
 
 type Config struct {
 	LocalHost  string `json:"local_addr" yaml:"local-addr"`

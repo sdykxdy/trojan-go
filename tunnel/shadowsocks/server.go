@@ -2,11 +2,11 @@ package shadowsocks
 
 import (
 	"context"
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/config"
-	"github.com/faireal/trojan-go/log"
-	"github.com/faireal/trojan-go/redirector"
-	"github.com/faireal/trojan-go/tunnel"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/log"
+	"github.com/sdykxdy/trojan-go/redirector"
+	"github.com/sdykxdy/trojan-go/tunnel"
 	"github.com/shadowsocks/go-shadowsocks2/core"
 	"net"
 )

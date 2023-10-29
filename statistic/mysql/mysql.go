@@ -8,11 +8,11 @@ import (
 	// MySQL Driver
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/config"
-	"github.com/faireal/trojan-go/log"
-	"github.com/faireal/trojan-go/statistic"
-	"github.com/faireal/trojan-go/statistic/memory"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/log"
+	"github.com/sdykxdy/trojan-go/statistic"
+	"github.com/sdykxdy/trojan-go/statistic/memory"
 )
 
 const Name = "MYSQL"

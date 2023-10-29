@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/config"
-	"github.com/faireal/trojan-go/test/util"
-	"github.com/faireal/trojan-go/tunnel"
-	"github.com/faireal/trojan-go/tunnel/freedom"
-	"github.com/faireal/trojan-go/tunnel/transport"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/test/util"
+	"github.com/sdykxdy/trojan-go/tunnel"
+	"github.com/sdykxdy/trojan-go/tunnel/freedom"
+	"github.com/sdykxdy/trojan-go/tunnel/transport"
 )
 
 func TestSimpleSocks(t *testing.T) {

@@ -9,10 +9,10 @@ import (
 
 	"github.com/xtaci/smux"
 
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/config"
-	"github.com/faireal/trojan-go/log"
-	"github.com/faireal/trojan-go/tunnel"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/log"
+	"github.com/sdykxdy/trojan-go/tunnel"
 )
 
 type muxID uint32

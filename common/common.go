@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/faireal/trojan-go/log"
+	"github.com/sdykxdy/trojan-go/log"
 )
 
 type Runnable interface {

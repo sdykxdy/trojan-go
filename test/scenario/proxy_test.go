@@ -13,17 +13,17 @@ import (
 
 	netproxy "golang.org/x/net/proxy"
 
-	_ "github.com/faireal/trojan-go/api"
-	_ "github.com/faireal/trojan-go/api/service"
-	"github.com/faireal/trojan-go/common"
-	_ "github.com/faireal/trojan-go/log/golog"
-	"github.com/faireal/trojan-go/proxy"
-	_ "github.com/faireal/trojan-go/proxy/client"
-	_ "github.com/faireal/trojan-go/proxy/forward"
-	_ "github.com/faireal/trojan-go/proxy/nat"
-	_ "github.com/faireal/trojan-go/proxy/server"
-	_ "github.com/faireal/trojan-go/statistic/memory"
-	"github.com/faireal/trojan-go/test/util"
+	_ "github.com/sdykxdy/trojan-go/api"
+	_ "github.com/sdykxdy/trojan-go/api/service"
+	"github.com/sdykxdy/trojan-go/common"
+	_ "github.com/sdykxdy/trojan-go/log/golog"
+	"github.com/sdykxdy/trojan-go/proxy"
+	_ "github.com/sdykxdy/trojan-go/proxy/client"
+	_ "github.com/sdykxdy/trojan-go/proxy/forward"
+	_ "github.com/sdykxdy/trojan-go/proxy/nat"
+	_ "github.com/sdykxdy/trojan-go/proxy/server"
+	_ "github.com/sdykxdy/trojan-go/statistic/memory"
+	"github.com/sdykxdy/trojan-go/test/util"
 )
 
 // test key and cert

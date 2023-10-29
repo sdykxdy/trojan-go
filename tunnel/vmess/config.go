@@ -1,6 +1,6 @@
 package vmess
 
-import "github.com/faireal/trojan-go/config"
+import "github.com/sdykxdy/trojan-go/config"
 
 // Request Options
 const (

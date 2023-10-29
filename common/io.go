@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/faireal/trojan-go/log"
+	"github.com/sdykxdy/trojan-go/log"
 )
 
 type RewindReader struct {

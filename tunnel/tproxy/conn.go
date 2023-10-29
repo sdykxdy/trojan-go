@@ -7,8 +7,8 @@ import (
 	"context"
 	"net"
 
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/tunnel"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/tunnel"
 )
 
 type Conn struct {

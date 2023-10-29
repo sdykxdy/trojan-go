@@ -7,9 +7,9 @@ import (
 	"github.com/txthinking/socks5"
 	"golang.org/x/net/proxy"
 
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/config"
-	"github.com/faireal/trojan-go/tunnel"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/tunnel"
 )
 
 type Client struct {

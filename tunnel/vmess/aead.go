@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
-	"github.com/faireal/trojan-go/common/pool"
+	"github.com/sdykxdy/trojan-go/common/pool"
 	"io"
 	"sync"
 )

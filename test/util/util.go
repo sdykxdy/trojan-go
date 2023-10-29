@@ -7,7 +7,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/faireal/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/common"
 )
 
 // CheckConn checks if two netConn were connected and work properly

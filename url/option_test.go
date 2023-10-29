@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/faireal/trojan-go/proxy/client"
+	_ "github.com/sdykxdy/trojan-go/proxy/client"
 )
 
 func TestUrl_Handle(t *testing.T) {

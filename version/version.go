@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/constant"
-	"github.com/faireal/trojan-go/option"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/constant"
+	"github.com/sdykxdy/trojan-go/option"
 )
 
 type versionOption struct {
@@ -31,7 +31,7 @@ func (c *versionOption) Handle() error {
 		fmt.Println("")
 		fmt.Println("Developed by PageFault (p4gefau1t)")
 		fmt.Println("Licensed under GNU General Public License version 3")
-		fmt.Println("GitHub Repository:\thttps://github.com/faireal/trojan-go")
+		fmt.Println("GitHub Repository:\thttps://github.com/sdykxdy/trojan-go")
 		fmt.Println("Trojan-Go Documents:\thttps://p4gefau1t.github.io/trojan-go/")
 		return nil
 	}

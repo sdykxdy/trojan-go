@@ -8,7 +8,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/faireal/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/common"
 )
 
 type Command byte

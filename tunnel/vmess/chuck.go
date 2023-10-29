@@ -3,7 +3,7 @@ package vmess
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/faireal/trojan-go/common/pool"
+	"github.com/sdykxdy/trojan-go/common/pool"
 	"io"
 	"math/rand"
 )

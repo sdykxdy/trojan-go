@@ -4,5 +4,5 @@
 package build
 
 import (
-	_ "github.com/faireal/trojan-go/proxy/nat"
+	_ "github.com/sdykxdy/trojan-go/proxy/nat"
 )

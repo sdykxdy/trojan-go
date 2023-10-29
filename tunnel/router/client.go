@@ -10,13 +10,13 @@ import (
 
 	v2router "github.com/v2fly/v2ray-core/v4/app/router"
 
-	"github.com/faireal/trojan-go/common"
-	"github.com/faireal/trojan-go/common/geodata"
-	"github.com/faireal/trojan-go/config"
-	"github.com/faireal/trojan-go/log"
-	"github.com/faireal/trojan-go/tunnel"
-	"github.com/faireal/trojan-go/tunnel/freedom"
-	"github.com/faireal/trojan-go/tunnel/transport"
+	"github.com/sdykxdy/trojan-go/common"
+	"github.com/sdykxdy/trojan-go/common/geodata"
+	"github.com/sdykxdy/trojan-go/config"
+	"github.com/sdykxdy/trojan-go/log"
+	"github.com/sdykxdy/trojan-go/tunnel"
+	"github.com/sdykxdy/trojan-go/tunnel/freedom"
+	"github.com/sdykxdy/trojan-go/tunnel/transport"
 )
 
 const (

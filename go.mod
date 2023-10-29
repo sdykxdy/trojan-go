@@ -1,4 +1,4 @@
-module github.com/faireal/trojan-go
+module github.com/sdyk/trojan-go
 
 go 1.18
 
